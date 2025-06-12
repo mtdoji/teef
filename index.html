@@ -15,11 +15,14 @@
             background-color: #1a1a1a; /* Dark background */
             margin: 0;
             color: #f0f0f0; /* Light text color */
+            overflow: hidden; /* Prevent overflow */
         }
         #gameCanvas {
             background-color: #2e2e2e; /* Darker canvas background */
             border: 2px solid #fff; /* White border */
             display: block;
+            max-width: 100%; /* Responsive */
+            max-height: 80vh; /* Prevent height overflow */
         }
         #turnIndicator {
             margin: 20px;
@@ -58,7 +61,7 @@
     </style>
 </head>
 <body>
-    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <div id="turnIndicator">Your Turn</div>
     <button id="restartButton">Restart Game</button>
     <div class="resultText" id="resultText"></div>
@@ -71,13 +74,27 @@
 
         const rows = 2;
         const columns = 6;
-        const boxWidth = canvas.width / columns;
-        const boxHeight = canvas.height / rows;
-
+        let boxWidth, boxHeight;
         let deathBox = Math.floor(Math.random() * (rows * columns));
         let currentPlayer = 'player'; // 'player' or 'cpu'
         let gameOver = false;
         let selectedBoxes = Array(rows * columns).fill(false);
+
+        function resizeCanvas() {
+            const aspectRatio = 6 / 2; // columns / rows
+            const newWidth = window.innerWidth * 0.9; // 90% of the window width
+            const newHeight = newWidth / aspectRatio;
+            if (newHeight > window.innerHeight * 0.8) {
+                canvas.height = window.innerHeight * 0.8; // Max 80% of window height
+                canvas.width = canvas.height * aspectRatio;
+            } else {
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+            }
+            boxWidth = canvas.width / columns;
+            boxHeight = canvas.height / rows;
+            drawBoxes();
+        }
 
         function drawBoxes() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -187,10 +204,10 @@
             drawBoxes();
         }
 
+        window.addEventListener('resize', resizeCanvas);
         canvas.addEventListener('click', playerMove);
         restartButton.addEventListener('click', restartGame);
-        updateTurnIndicator();
-        drawBoxes();
+        resizeCanvas(); // Initial resize
     </script>
 </body>
 </html>
