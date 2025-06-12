@@ -27,7 +27,7 @@
         #turnIndicator {
             margin: 20px;
             font-size: 24px;
-            color: #f0f0f0; /* Light text color */
+            color: #00ff00; /* Green for player's turn */
         }
         #restartButton {
             display: none;
@@ -111,6 +111,7 @@
 
         function updateTurnIndicator() {
             turnIndicator.textContent = currentPlayer === 'player' ? "Your Turn" : "CPU's Turn";
+            turnIndicator.style.color = currentPlayer === 'player' ? "#00ff00" : "#ff0000"; // Green for player, red for CPU
         }
 
         function playerMove(event) {
