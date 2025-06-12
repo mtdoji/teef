@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russian Roulette Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Centering vertically */
+            height: 100vh;
+            background-color: #1a1a1a; /* Dark background */
+            margin: 0;
+            color: #f0f0f0; /* Light text color */
+        }
+        #gameCanvas {
+            background-color: #2e2e2e; /* Darker canvas background */
+            border: 2px solid #fff; /* White border */
+            display: block;
+        }
+        #turnIndicator {
+            margin: 20px;
+            font-size: 24px;
+            color: #f0f0f0; /* Light text color */
+        }
+        #restartButton {
+            display: none;
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50; /* Green button */
+            color: white; /* White text */
+            border: none; /* No border */
+            border-radius: 5px; /* Rounded corners */
+        }
+        #restartButton:hover {
+            background-color: #45a049; /* Darker green on hover */
+        }
+        .resultText {
+            position: absolute;
+            font-size: 48px;
+            font-weight: bold;
+            display: none;
+            top: 20px; /* Positioning above the boxes */
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #ff0; /* Default confetti color */
+            opacity: 0.8;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+    <div id="turnIndicator">Your Turn</div>
+    <button id="restartButton">Restart Game</button>
+    <div class="resultText" id="resultText"></div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const turnIndicator = document.getElementById('turnIndicator');
+        const restartButton = document.getElementById('restartButton');
+        const resultText = document.getElementById('resultText');
+
+        const rows = 2;
+        const columns = 6;
+        const boxWidth = canvas.width / columns;
+        const boxHeight = canvas.height / rows;
+
+        let deathBox = Math.floor(Math.random() * (rows * columns));
+        let currentPlayer = 'player'; // 'player' or 'cpu'
+        let gameOver = false;
+        let selectedBoxes = Array(rows * columns).fill(false);
+
+        function drawBoxes() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < columns; c++) {
+                    const index = r * columns + c;
+                    ctx.fillStyle = selectedBoxes[index] ? (index === deathBox ? 'red' : 'gray') : '#3a3a3a'; // Darker color for boxes
+                    ctx.fillRect(c * boxWidth, r * boxHeight, boxWidth - 2, boxHeight - 2);
+                    ctx.strokeStyle = '#fff'; // White border for boxes
+                    ctx.strokeRect(c * boxWidth, r * boxHeight, boxWidth - 2, boxHeight - 2);
+                }
+            }
+        }
+
+        function updateTurnIndicator() {
+            turnIndicator.textContent = currentPlayer === 'player' ? "Your Turn" : "CPU's Turn";
+        }
+
+        function playerMove(event) {
+            if (gameOver || currentPlayer !== 'player') return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            const c = Math.floor(x / boxWidth);
+            const r = Math.floor(y / boxHeight);
+            const index = r * columns + c;
+
+            if (selectedBoxes[index]) return; // Prevent selecting the same box
+
+            selectedBoxes[index] = true; // Mark the box as selected
+            drawBoxes();
+
+            if (index === deathBox) {
+                showResult("You Lose!", 'red');
+                gameOver = true;
+            } else {
+                currentPlayer = 'cpu';
+                updateTurnIndicator();
+                setTimeout(cpuMove, 1000);
+            }
+        }
+
+        function cpuMove() {
+            if (gameOver) return;
+
+            let cpuChoice;
+            do {
+                cpuChoice = Math.floor(Math.random() * (rows * columns));
+            } while (selectedBoxes[cpuChoice]); // Ensure CPU does not select the same box
+
+            selectedBoxes[cpuChoice] = true; // Mark CPU selected box
+            drawBoxes();
+
+            if (cpuChoice === deathBox) {
+                showResult("You Win!", 'green');
+                gameOver = true;
+            } else {
+                currentPlayer = 'player';
+                updateTurnIndicator();
+            }
+        }
+
+        function showResult(message, color) {
+            resultText.textContent = message;
+            resultText.style.color = color;
+            resultText.style.display = 'block';
+            createConfetti();
+            restartButton.style.display = 'block'; // Show restart button
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = '#' + Math.floor(Math.random()*16777215).toString(16); // Random color
+                confetti.style.left = Math.random() * window.innerWidth + 'px';
+                confetti.style.top = '0px';
+                document.body.appendChild(confetti);
+                animateConfetti(confetti);
+            }
+        }
+
+        function animateConfetti(confetti) {
+            const fallSpeed = Math.random() * 3 + 2; // Random fall speed
+            const fallDistance = Math.random() * 200 + 300; // Random fall distance
+            const fallAnimation = setInterval(() => {
+                const top = parseFloat(confetti.style.top);
+                if (top < fallDistance) {
+                    confetti.style.top = top + fallSpeed + 'px';
+                } else {
+                    clearInterval(fallAnimation);
+                    confetti.remove(); // Remove confetti after falling
+                }
+            }, 20);
+        }
+
+        function restartGame() {
+            selectedBoxes.fill(false);
+            deathBox = Math.floor(Math.random() * (rows * columns));
+            currentPlayer = 'player';
+            gameOver = false;
+            restartButton.style.display = 'none'; // Hide restart button
+            resultText.style.display = 'none'; // Hide result text
+            updateTurnIndicator();
+            drawBoxes();
+        }
+
+        canvas.addEventListener('click', playerMove);
+        restartButton.addEventListener('click', restartGame);
+        updateTurnIndicator();
+        drawBoxes();
+    </script>
+</body>
+</html>
